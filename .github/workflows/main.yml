@@ -1,4 +1,4 @@
-name: Fetch 10-Year Gilt Yield
+name: Screenshot
 
 on:
   schedule:
