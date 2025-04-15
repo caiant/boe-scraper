@@ -2,9 +2,8 @@ name: BOE Rate Scraper
 
 on:
   schedule:
-    # Runs at 7:25 AM EST every day (12:25 UTC during standard time, 11:25 UTC during DST)
     - cron: '25 12 * * *'
-  workflow_dispatch:  # Allow manual triggering
+  workflow_dispatch:
 
 jobs:
   scrape:
@@ -13,6 +12,8 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
+      with:
+        persist-credentials: true
       
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -33,11 +34,22 @@ jobs:
       run: |
         python boe_scraper.py
         
+    - name: Verify files exist
+      run: |
+        ls -la
+        [ -f boe_rates.csv ] || echo "CSV file missing"
+        [ -d boe_screenshots ] || echo "Screenshots dir missing"
+        
     - name: Commit and push changes
       run: |
         git config --global user.name "GitHub Actions"
         git config --global user.email "actions@github.com"
-        git add boe_screenshots/* boe_rates.csv
-        git commit -m "Automated update: BOE rate and screenshot" || echo "No changes to commit"
-        git push
-      
+        
+        # Only proceed if there are changes
+        if git diff --quiet --exit-code; then
+          echo "No changes to commit"
+        else
+          git add boe_screenshots/* boe_rates.csv
+          git commit -m "Automated update: BOE rate and screenshot [skip ci]"
+          git push
+        fi
